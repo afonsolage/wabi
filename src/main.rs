@@ -1,7 +1,7 @@
 use asset::WasmAsset;
 use bevy::{asset::AssetServerSettings, prelude::*};
 
-use bevy_wabi_api::WabiRuntime;
+use wabi_api::WabiRuntime;
 
 mod asset;
 
@@ -15,9 +15,9 @@ impl<T: WabiRuntime> RuntimeImpl<T> {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub type Runtime = RuntimeImpl<bevy_wabi_wasmtime::WasmtimeRuntime>;
+pub type Runtime = RuntimeImpl<wabi_wasmtime::WasmtimeRuntime>;
 #[cfg(target_arch = "wasm32")]
-pub type Runtime = RuntimeImpl<bevy_wabi_wasm::WasmRuntime>;
+pub type Runtime = RuntimeImpl<wabi_wasm::WasmRuntime>;
 
 fn main() {
     let mut app = App::new();

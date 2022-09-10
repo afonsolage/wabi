@@ -1,5 +1,5 @@
 [package]
-name = "bevy_wabi"
+name = "wabi"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,15 +16,15 @@ bevy = { version = "0.8", default-features = false, features = [
     "filesystem_watcher",
 ] }
 
-bevy_wabi_api = { path = "crates/runtime/api" }
+wabi_api = { path = "crates/runtime/api" }
 
 futures-lite = "1.12"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-bevy_wabi_wasmtime = { path = "crates/runtime/wasmtime" }
+wabi_wasmtime = { path = "crates/runtime/wasmtime" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy_wabi_wasm = { path = "crates/runtime/wasm" }
+wabi_wasm = { path = "crates/runtime/wasm" }
 
 
 [profile.mod-release]

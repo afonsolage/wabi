@@ -6,7 +6,7 @@ mod:
     mv assets/mods/dummy_bg.wasm assets/mods/dummy.wasm
     cp -r assets web/
 
-build:
+wasm-build:
     cargo build -r --target wasm32-unknown-unknown
     wasm-bindgen --out-name wabi --out-dir web --target web target\wasm32-unknown-unknown\release\bevy_wabi.wasm
     echo "" | save web/wabi.js --append

@@ -10,5 +10,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 bevy_reflect = { version = "0.8" }
-bevy_wabi_api = { path = "../../runtime/api" }
+wabi_api = { path = "../../runtime/api" }
 rmp-serde  = "1.1"

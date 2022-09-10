@@ -2,7 +2,7 @@ use std::io::Write;
 
 use bevy_reflect::{serde::ReflectSerializer, Reflect, TypeRegistry};
 
-use bevy_wabi_api::{create_type_registry, Action};
+use wabi_api::{create_type_registry, Action};
 
 static mut INSTANCE_DATA: InstanceData = InstanceData {
     id: 0,

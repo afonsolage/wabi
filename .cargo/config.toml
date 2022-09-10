@@ -1,2 +1,2 @@
 [env]
-RUST_LOG = "wabi=trace"
+RUST_LOG = "wabi=trace,error"

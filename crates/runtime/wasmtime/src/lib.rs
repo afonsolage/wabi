@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use bevy_wabi_api::WabiRuntime;
+use bevy::prelude::warn;
+use wabi_api::WabiRuntime;
 use wasmtime::*;
 
 pub struct WasmtimeRuntime {
@@ -10,6 +11,9 @@ pub struct WasmtimeRuntime {
     modules: HashMap<String, Module>,
     instances: HashMap<String, Instance>,
 }
+
+// Implement __wbindgen_throw mock
+// Implement __wabi_process_action
 
 impl WabiRuntime for WasmtimeRuntime {
     fn new() -> Self {
@@ -26,6 +30,11 @@ impl WabiRuntime for WasmtimeRuntime {
 
     fn load_mod(&mut self, name: String, buffer: &[u8]) {
         let module = Module::from_binary(&self.engine, buffer).unwrap();
+
+        for import in module.imports() {
+            warn!("Import needed: {:?}", import);
+        }
+
         let instance = Instance::new(&mut self.store, &module, &[]).unwrap();
 
         self.modules.insert(name.clone(), module);

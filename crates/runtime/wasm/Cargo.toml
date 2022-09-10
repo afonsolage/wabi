@@ -1,12 +1,12 @@
 [package]
-name = "bevy_wabi_wasm"
+name = "wabi_wasm"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy_wabi_api = { path = "../api" }
+wabi_api = { path = "../api" }
 
 bevy_ecs = "0.8"
 bevy_reflect = "0.8"

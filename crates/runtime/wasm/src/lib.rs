@@ -1,7 +1,7 @@
 use std::{cell::UnsafeCell, collections::HashMap};
 
 use bevy_log::{error, info};
-use bevy_wabi_api::WabiRuntime;
+use wabi_api::WabiRuntime;
 use js_sys::{
     Function, Reflect, Uint8Array,
     WebAssembly::{self, Memory},
@@ -175,7 +175,7 @@ impl WabiRuntime for WasmRuntime {
 
 pub mod wabi {
     use bevy_log::info;
-    use bevy_wabi_api::process_action;
+    use wabi_api::process_action;
     use wasm_bindgen::prelude::wasm_bindgen;
 
     #[wasm_bindgen]
