@@ -1,0 +1,16 @@
+[package]
+name = "bevy_wabi_api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.8", default-features = false }
+bevy_reflect = "0.8"
+
+rmp-serde = "1.1"
+
+# Use this until async traits is officialy supported in Rust
+async-trait = "0.1"
+num_enum = "0.5"

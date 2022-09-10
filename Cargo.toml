@@ -1,0 +1,44 @@
+[package]
+name = "bevy_wabi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = ["crates/runtime/*", "crates/mod/*"]
+
+[dependencies]
+bevy = { version = "0.8", default-features = false, features = [
+    "bevy_asset",
+    "bevy_winit",
+    "render",
+    "filesystem_watcher",
+] }
+
+bevy_wabi_api = { path = "crates/runtime/api" }
+
+futures-lite = "1.12"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy_wabi_wasmtime = { path = "crates/runtime/wasmtime" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy_wabi_wasm = { path = "crates/runtime/wasm" }
+
+
+[profile.mod-release]
+# Use release profile as default values
+inherits = "release"
+
+# Optimize with size in mind, also try "s", sometimes it is better.
+# This doesn't increase compilation times compared to -O3, great improvements
+opt-level = "z"
+
+# Do a second optimization pass removing duplicate or unused code from dependencies.
+# Slows compile times, marginal improvements
+lto = "fat"
+
+# When building crates, optimize larger chunks at a time
+# Slows compile times, marginal improvements
+codegen-units = 1

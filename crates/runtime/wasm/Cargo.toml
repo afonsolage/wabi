@@ -1,0 +1,22 @@
+[package]
+name = "bevy_wabi_wasm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy_wabi_api = { path = "../api" }
+
+bevy_ecs = "0.8"
+bevy_reflect = "0.8"
+bincode = "1.3"
+bevy_log = "0.8"
+bevy_tasks = "0.8"
+
+# wasm-bindgen stuff
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["Window"] }
+

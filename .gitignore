@@ -1,0 +1,10 @@
+/target
+/.vscode
+Cargo.lock
+
+assets/mods/*
+
+web/*.wasm
+web/*.js
+web/*.ts
+web/assets
