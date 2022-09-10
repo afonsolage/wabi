@@ -6,8 +6,8 @@ use bevy::utils::HashSet;
 use bevy_reflect::TypeRegistry;
 
 pub const WABI_MOODULE_NAME: &str = "wabi";
-pub const WABI_ALLOCATOR: &str = "__wabi__alloc";
-pub const WABI_ENTRY_POINT: &str = "__wabi__main";
+pub const WABI_ALLOCATOR: &str = "__wabi_alloc";
+pub const WABI_ENTRY_POINT: &str = "__wabi_entry_point";
 pub const WABI_PROCESS_ACTION: &str = "__wabi_process_action";
 
 pub enum InstanceState<T: WabiInstancePlatform> {
@@ -95,7 +95,7 @@ pub trait WabiRuntimePlatform {
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance>;
 }
 
-#[derive(num_enum::FromPrimitive)]
+#[derive(num_enum::FromPrimitive, Debug)]
 #[repr(u8)]
 pub enum Action {
     DEBUG,

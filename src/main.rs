@@ -2,7 +2,6 @@ use asset::WasmAsset;
 use bevy::{asset::AssetServerSettings, prelude::*};
 
 use runtime::WabiRuntime;
-use wabi_api::WabiRuntimePlatform;
 
 mod asset;
 mod runtime;

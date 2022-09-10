@@ -78,7 +78,7 @@ extern "C" {
 }
 
 #[no_mangle]
-pub extern "C" fn __wabi_main() {
+pub extern "C" fn __wabi_entry_point() {
     // crate::test::run();
     debug("It's really working?");
     debug("Just like that?");
@@ -88,7 +88,7 @@ pub extern "C" fn __wabi_main() {
 const PAGE_SIZE: usize = 65536;
 
 #[no_mangle]
-pub extern "C" fn __wabi_init(id: u32) -> i32 {
+pub extern "C" fn __wabi_alloc(id: u32) -> i32 {
     // SAFETY: this function will be called only by host, so only one mutable access at any given time.
     unsafe {
         INSTANCE_DATA = InstanceData {

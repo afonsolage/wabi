@@ -8,6 +8,6 @@ mod:
 
 build:
     cargo build -r --target wasm32-unknown-unknown
-    wasm-bindgen --out-name wabi --out-dir web --target web target\wasm32-unknown-unknown\release\bevy_wabi.wasm
+    wasm-bindgen --no-typescript --out-name wabi --out-dir web --target web target\wasm32-unknown-unknown\release\wabi.wasm
     echo "" | save web/wabi.js --append
     echo "export { getImports }" | save web/wabi.js --append

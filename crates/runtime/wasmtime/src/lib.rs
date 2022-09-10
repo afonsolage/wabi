@@ -1,28 +1,37 @@
 use std::collections::HashMap;
 
-use bevy::prelude::{error, warn};
-use wabi_api::{WabiInstancePlatform, WabiRuntimePlatform};
+use bevy::prelude::error;
+use wabi_api::{
+    InstanceState, WabiInstancePlatform, WabiRuntimePlatform, WABI_ALLOCATOR, WABI_ENTRY_POINT,
+    WABI_MOODULE_NAME, WABI_PROCESS_ACTION,
+};
 use wasmtime::*;
 
 pub struct WasmtimeInstance {
+    id: u32,
+
     init: TypedFunc<u32, u32>,
     main: TypedFunc<(), ()>,
 
     store: Store<()>,
     memory: Memory,
+
+    buffer_offset: u32,
 }
 
 impl WabiInstancePlatform for WasmtimeInstance {
     fn run_alloc(&mut self) {
-        todo!()
+        self.buffer_offset = self.init.call(&mut self.store, self.id).unwrap();
     }
 
     fn run_main(&mut self) {
-        todo!()
+        self.main.call(&mut self.store, ()).unwrap();
     }
 
     fn read_buffer(&mut self, len: u32) -> &[u8] {
-        todo!()
+        let begin = self.buffer_offset as usize;
+        let end = begin + len as usize;
+        &self.memory.data(&mut self.store)[begin..end]
     }
 }
 
@@ -30,11 +39,8 @@ pub struct WasmtimeRuntime {
     engine: Engine,
     linker: Linker<()>,
 
-    instances: HashMap<u32, WasmtimeInstance>,
+    instances: HashMap<u32, InstanceState<WasmtimeInstance>>,
 }
-
-// Implement __wbindgen_throw mock
-// Implement __wabi_process_action
 
 impl WabiRuntimePlatform for WasmtimeRuntime {
     type ModuleInstance = WasmtimeInstance;
@@ -56,8 +62,8 @@ impl WabiRuntimePlatform for WasmtimeRuntime {
 
         linker
             .func_wrap(
-                "wabi",
-                "__wabi_process_action",
+                WABI_MOODULE_NAME,
+                WABI_PROCESS_ACTION,
                 move |_caller: Caller<'_, ()>, id: u32, len: u32, action: u32| {
                     (process_action)(id, len, action as u8);
                 },
@@ -78,13 +84,13 @@ impl WabiRuntimePlatform for WasmtimeRuntime {
         let instance = self.linker.instantiate(&mut store, &module).unwrap();
 
         let init = instance
-            .get_func(&mut store, "__wabi_init")
+            .get_func(&mut store, WABI_ALLOCATOR)
             .unwrap()
             .typed(&mut store)
             .unwrap();
 
         let main = instance
-            .get_func(&mut store, "__wabi_main")
+            .get_func(&mut store, WABI_ENTRY_POINT)
             .unwrap()
             .typed(&mut store)
             .unwrap();
@@ -93,25 +99,37 @@ impl WabiRuntimePlatform for WasmtimeRuntime {
 
         self.instances.insert(
             id,
-            WasmtimeInstance {
+            InstanceState::Idle(WasmtimeInstance {
+                id,
                 init,
                 main,
                 memory,
                 store,
-            },
+                buffer_offset: 0,
+            }),
         );
     }
 
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance> {
-        self.instances.get_mut(&id)
+        if let Some(InstanceState::Idle(instance)) = self.instances.get_mut(&id) {
+            Some(instance)
+        } else {
+            None
+        }
     }
 
     fn start_running_instance(&mut self, id: u32) -> Self::ModuleInstance {
-        todo!()
+        self.instances
+            .insert(id, InstanceState::Running)
+            .expect("Should exists")
+            .take()
     }
 
     fn finish_running_instance(&mut self, id: u32, instance: Self::ModuleInstance) {
-        todo!()
+        let previous = self.instances.insert(id, InstanceState::Idle(instance));
+        debug_assert!(previous
+            .expect("Should have a previous state of Running")
+            .is_running())
     }
 }
 

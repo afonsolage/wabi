@@ -27,9 +27,9 @@ fn get_runtime_data() -> &'static mut RuntimeData {
 pub struct ModInstance {
     id: u32,
 
-    init: Function,
-    main: Function,
-    memory_buffer: Uint8Array,
+    alloc: Function,
+    entry_point: Function,
+    memory: WebAssembly::Memory,
 
     buffer: Vec<u8>,
     buffer_offset: u32,
@@ -38,7 +38,7 @@ pub struct ModInstance {
 impl WabiInstancePlatform for ModInstance {
     fn run_alloc(&mut self) {
         self.buffer_offset = self
-            .init
+            .alloc
             .call1(&JsValue::undefined(), &JsValue::from(self.id))
             .unwrap()
             .as_f64()
@@ -46,14 +46,13 @@ impl WabiInstancePlatform for ModInstance {
     }
 
     fn run_main(&mut self) {
-        self.main.call0(&JsValue::undefined()).unwrap();
+        self.entry_point.call0(&JsValue::undefined()).unwrap();
     }
 
     fn read_buffer(&mut self, len: u32) -> &[u8] {
         self.buffer.resize(len as usize, 0);
 
-        self.memory_buffer
-            .subarray(self.buffer_offset, self.buffer_offset + len)
+        Uint8Array::new_with_byte_offset_and_length(&self.memory.buffer(), self.buffer_offset, len)
             .copy_to(&mut self.buffer);
 
         &self.buffer
@@ -67,21 +66,21 @@ impl ModInstance {
             .dyn_into::<Memory>()
             .unwrap();
 
-        let allocator = Reflect::get(&instance.exports(), &WABI_ALLOCATOR.into())
+        let alloc = Reflect::get(&instance.exports(), &WABI_ALLOCATOR.into())
             .unwrap()
             .dyn_into::<Function>()
             .unwrap();
 
-        let main = Reflect::get(&instance.exports(), &WABI_ENTRY_POINT.into())
+        let entry_point = Reflect::get(&instance.exports(), &WABI_ENTRY_POINT.into())
             .unwrap()
             .dyn_into::<Function>()
             .unwrap();
 
         Self {
             id,
-            init: allocator,
-            main,
-            memory_buffer: Uint8Array::new(&memory.buffer()),
+            alloc,
+            entry_point,
+            memory,
             buffer: Default::default(),
             buffer_offset: 0,
         }

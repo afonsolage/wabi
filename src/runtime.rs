@@ -1,7 +1,7 @@
 use std::cell::UnsafeCell;
 
 use bevy::{
-    prelude::info,
+    prelude::{debug, error, trace},
     reflect::{erased_serde::__private::serde::de::DeserializeSeed, serde::ReflectDeserializer},
     utils::HashMap,
 };
@@ -54,6 +54,7 @@ impl WabiRuntime {
 
         self.last_id += 1;
         self.inner.load_module(self.last_id, buffer);
+        self.instances_name_map.insert(name, self.last_id);
     }
 
     pub fn run(&mut self, name: &str) {
@@ -107,6 +108,8 @@ impl WabiRuntime {
     }
 
     fn process_action(buffer: &[u8], action: Action) {
+        trace!("Received action {:?} ({})", action, buffer.len());
+
         let type_registry = create_type_registry();
         let reflect_deserializer = ReflectDeserializer::new(&type_registry);
         let mut deserializer = rmp_serde::Deserializer::from_read_ref(buffer);
@@ -115,9 +118,9 @@ impl WabiRuntime {
         match action {
             Action::DEBUG => {
                 let message = value.downcast_ref::<String>().unwrap();
-                info!("{}", message);
+                debug!("{}", message);
             }
-            Action::INVALID => info!("Invalid action received."),
+            Action::INVALID => error!("Invalid action received."),
         }
     }
 }
