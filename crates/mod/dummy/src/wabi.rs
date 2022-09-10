@@ -2,7 +2,7 @@ use std::io::Write;
 
 use bevy_reflect::{serde::ReflectSerializer, Reflect, TypeRegistry};
 
-use wabi_api::{create_type_registry, Action};
+use wabi_api::{create_type_registry, log::LogMessage, Action};
 
 static mut INSTANCE_DATA: InstanceData = InstanceData {
     id: 0,
@@ -61,15 +61,28 @@ impl std::io::Write for ActionBufferWriter {
     }
 }
 
-// TODO: I need this in order to __wabi_send_buffer don't get removed when compiling.
-// Probably I'm missing something here, but I let this task for my future me.
-// #[no_mangle]
-// pub unsafe extern "C" fn __wabi_dont_call_me() {
-//     __wabi_process_action(INSTANCE_ID, 0);
-// }
+pub fn trace(message: impl ToString) {
+    log::<0>(message.to_string());
+}
 
 pub fn debug(message: impl ToString) {
-    send_action(&message.to_string(), Action::DEBUG);
+    log::<1>(message.to_string());
+}
+
+pub fn info(message: impl ToString) {
+    log::<2>(message.to_string());
+}
+
+pub fn warn(message: impl ToString) {
+    log::<3>(message.to_string());
+}
+
+pub fn error(message: impl ToString) {
+    log::<4>(message.to_string());
+}
+
+pub fn log<const L: u8>(message: String) {
+    send_action(&LogMessage { level: L, message }, Action::LOG);
 }
 
 #[link(wasm_import_module = "wabi")]
@@ -80,9 +93,11 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn __wabi_entry_point() {
     // crate::test::run();
-    debug("It's really working?");
+    trace("It's really working?");
     debug("Just like that?");
-    debug("Impressive!");
+    info("Impressive!");
+    warn("Yellow?");
+    error("Red!");
 }
 
 const PAGE_SIZE: usize = 65536;

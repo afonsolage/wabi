@@ -4,6 +4,9 @@ use bevy::utils::HashSet;
 
 // We need both, since bevy::prelude rename TypeRegistry
 use bevy_reflect::TypeRegistry;
+use log::LogMessage;
+
+pub mod log;
 
 pub const WABI_MOODULE_NAME: &str = "wabi";
 pub const WABI_ALLOCATOR: &str = "__wabi_alloc";
@@ -98,7 +101,7 @@ pub trait WabiRuntimePlatform {
 #[derive(num_enum::FromPrimitive, Debug)]
 #[repr(u8)]
 pub enum Action {
-    DEBUG,
+    LOG,
 
     #[default]
     INVALID = 255,
@@ -111,6 +114,8 @@ pub fn create_type_registry() -> TypeRegistry {
     registry.register::<HashSet<String>>();
     registry.register::<String>();
     registry.register::<Option<String>>();
+
+    // registry.register::<LogMessage>();
 
     registry
 }

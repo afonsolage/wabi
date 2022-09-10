@@ -1,12 +1,14 @@
 use std::cell::UnsafeCell;
 
 use bevy::{
-    prelude::{debug, error, trace},
+    prelude::{debug, error, info, trace, warn},
     reflect::{erased_serde::__private::serde::de::DeserializeSeed, serde::ReflectDeserializer},
     utils::HashMap,
 };
-use bevy_reflect::TypeRegistry;
-use wabi_api::{create_type_registry, Action, WabiInstancePlatform, WabiRuntimePlatform};
+use bevy_reflect::{FromReflect, TypeRegistry};
+use wabi_api::{
+    create_type_registry, log::LogMessage, Action, WabiInstancePlatform, WabiRuntimePlatform,
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub type Platform = wabi_wasmtime::WasmtimeRuntime;
@@ -108,17 +110,29 @@ impl WabiRuntime {
     }
 
     fn process_action(buffer: &[u8], action: Action) {
-        trace!("Received action {:?} ({})", action, buffer.len());
-
         let type_registry = create_type_registry();
         let reflect_deserializer = ReflectDeserializer::new(&type_registry);
         let mut deserializer = rmp_serde::Deserializer::from_read_ref(buffer);
         let value = reflect_deserializer.deserialize(&mut deserializer).unwrap();
 
+        trace!(
+            "Received action {:?} ({}). Data: {:?}",
+            action,
+            buffer.len(),
+            value
+        );
+
         match action {
-            Action::DEBUG => {
-                let message = value.downcast_ref::<String>().unwrap();
-                debug!("{}", message);
+            Action::LOG => {
+                let LogMessage { level, message } = LogMessage::from_reflect(&*value).unwrap();
+                match level {
+                    0 => trace!(message),
+                    1 => debug!(message),
+                    2 => info!(message),
+                    3 => warn!(message),
+                    4 => error!(message),
+                    _ => error!("Invalid level received: {}. Message: ({})", level, message),
+                }
             }
             Action::INVALID => error!("Invalid action received."),
         }
