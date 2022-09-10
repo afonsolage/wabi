@@ -1,5 +1,9 @@
 use asset::WasmAsset;
-use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy::{
+    asset::AssetServerSettings,
+    log::{Level, LogSettings},
+    prelude::*,
+};
 
 use runtime::WabiRuntime;
 
@@ -11,6 +15,10 @@ fn main() {
         .insert_resource(AssetServerSettings {
             watch_for_changes: true,
             ..Default::default()
+        })
+        .insert_resource(LogSettings {
+            filter: "wabi=trace,error".to_string(),
+            level: Level::TRACE,
         })
         .add_plugins(DefaultPlugins)
         .add_asset::<WasmAsset>()
