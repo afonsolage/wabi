@@ -1,5 +1,5 @@
 [package]
-name = "wabi_wasm"
+name = "wabi_wasm_bindgen"
 version = "0.1.0"
 edition = "2021"
 

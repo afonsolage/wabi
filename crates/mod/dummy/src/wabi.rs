@@ -68,8 +68,8 @@ impl std::io::Write for ActionBufferWriter {
 //     __wabi_process_action(INSTANCE_ID, 0);
 // }
 
-pub fn debug(message: &String) {
-    send_action(message, Action::DEBUG);
+pub fn debug(message: impl ToString) {
+    send_action(&message.to_string(), Action::DEBUG);
 }
 
 #[link(wasm_import_module = "wabi")]
@@ -80,9 +80,9 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn __wabi_main() {
     // crate::test::run();
-    debug(&"Running main!".to_string());
-    debug(&"Will this work?".to_string());
-    debug(&"Even if I send many messages".to_string());
+    debug("It's really working?");
+    debug("Just like that?");
+    debug("Impressive!");
 }
 
 const PAGE_SIZE: usize = 65536;

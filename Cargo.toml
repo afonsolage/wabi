@@ -15,16 +15,20 @@ bevy = { version = "0.8", default-features = false, features = [
     "render",
     "filesystem_watcher",
 ] }
+bevy_reflect = "0.8"
+
 
 wabi_api = { path = "crates/runtime/api" }
 
 futures-lite = "1.12"
 
+rmp-serde = "1.1"
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 wabi_wasmtime = { path = "crates/runtime/wasmtime" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wabi_wasm = { path = "crates/runtime/wasm" }
+wabi_wasm_bindgen = { path = "crates/runtime/wasm_bindgen" }
 
 
 [profile.mod-release]

@@ -1,6 +1,6 @@
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
-    prelude::{AssetEvent, EventReader},
+    // prelude::{AssetEvent, EventReader},
     reflect::{Reflect, TypeUuid},
 };
 
@@ -25,10 +25,10 @@ impl AssetLoader for WasmAsset {
     }
 }
 
-pub(crate) fn hot_reload_wasm_modules(mut assets_events: EventReader<AssetEvent<WasmAsset>>) {
-    for evt in assets_events.iter() {
-        if let AssetEvent::Modified { handle } = evt {
-            //
-        }
-    }
-}
+// pub(crate) fn hot_reload_wasm_modules(mut assets_events: EventReader<AssetEvent<WasmAsset>>) {
+//     for evt in assets_events.iter() {
+//         if let AssetEvent::Modified { handle } = evt {
+//             //
+//         }
+//     }
+// }
