@@ -4,13 +4,14 @@ use std::{
 };
 
 use bevy::{
-    prelude::{debug, error, info, trace, warn},
+    prelude::{debug, error, info, trace, warn, Resource},
     reflect::{erased_serde::__private::serde::de::DeserializeSeed, serde::ReflectDeserializer},
     utils::HashMap,
 };
 use bevy_reflect::{FromReflect, Reflect, TypeRegistry};
-use wabi_api::{
-    create_type_registry, log::LogMessage, Action, WabiInstancePlatform, WabiRuntimePlatform,
+use wabi_runtime_api::{
+    mod_api::{log::LogMessage, registry::create_type_registry, Action},
+    WabiInstancePlatform, WabiRuntimePlatform,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -60,6 +61,7 @@ impl Default for Context {
     }
 }
 
+#[derive(Resource)]
 pub struct WabiRuntime<P: WabiRuntimePlatform = Platform> {
     inner: P,
     type_registry: Arc<Mutex<TypeRegistry>>,
@@ -97,17 +99,28 @@ impl WabiRuntime {
 
     pub fn run(&mut self, name: &str) {
         let id = self.get_module_id(name).unwrap();
+
+        // let begin = Instant::now();
         let mut instance = self.inner.start_running_instance(id);
 
         // TODO: Find a better place for this
         instance.run_alloc();
 
+        // let alloc = Instant::now();
         RUNNING_CONTEXT.with(|cell| {
             cell.borrow_mut()
                 .setup(&mut instance, self.type_registry.clone())
         });
 
         instance.run_main();
+
+        // let finished = Instant::now();
+
+        // trace!(
+        //     "alloc: {}us, finished: {}us",
+        //     (alloc - begin).as_micros(),
+        //     (finished - alloc).as_micros()
+        // );
 
         RUNNING_CONTEXT.with(|cell| {
             cell.borrow_mut().tear_down();
@@ -156,6 +169,7 @@ impl WabiRuntime {
                     _ => error!("Invalid level received: {}. Message: ({})", level, message),
                 }
             }
+            Action::TEST => debug!("Received: {:?}", data),
             Action::INVALID => error!("Invalid action received."),
         }
     }

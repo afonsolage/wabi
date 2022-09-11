@@ -9,6 +9,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-bevy_reflect = { version = "0.8" }
-wabi_api = { path = "../../runtime/api" }
-rmp-serde  = "1.1"
+bevy_reflect = { version = "0.9.0-dev" }
+
+wabi_mod_api = { path = "../api" }
+rmp-serde = "1.1"

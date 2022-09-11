@@ -1,11 +1,11 @@
 use std::{cell::UnsafeCell, collections::HashMap};
 
-use bevy_log::{error, info};
+use bevy::prelude::{error, info};
 use js_sys::{
     Function, Reflect, Uint8Array,
     WebAssembly::{self, Memory},
 };
-use wabi_api::{
+use wabi_runtime_api::{
     InstanceState, WabiInstancePlatform, WabiRuntimePlatform, WABI_ALLOCATOR, WABI_ENTRY_POINT,
     WABI_MOODULE_NAME, WABI_PROCESS_ACTION,
 };

@@ -9,16 +9,15 @@ edition = "2021"
 members = ["crates/runtime/*", "crates/mod/*"]
 
 [dependencies]
-bevy = { version = "0.8", default-features = false, features = [
+bevy = { version = "0.9.0-dev", default-features = false, features = [
     "bevy_asset",
     "bevy_winit",
     "render",
     "filesystem_watcher",
 ] }
-bevy_reflect = "0.8"
+bevy_reflect = "0.9.0-dev"
 
-
-wabi_api = { path = "crates/runtime/api" }
+wabi_runtime_api = { path = "crates/runtime/api" }
 
 futures-lite = "1.12"
 
@@ -29,6 +28,14 @@ wabi_wasmtime = { path = "crates/runtime/wasmtime" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wabi_wasm_bindgen = { path = "crates/runtime/wasm_bindgen" }
+
+[dev-dependencies]
+rmpv = { version = "1.0", features = ["with-serde"] }
+serde_json = "1.0"
+
+[patch.crates-io]
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "6f2cc0b" }
+bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", rev = "6f2cc0b" }
 
 [profile.dev.package."*"]
 opt-level = 3
@@ -48,3 +55,7 @@ lto = "fat"
 # When building crates, optimize larger chunks at a time
 # Slows compile times, marginal improvements
 codegen-units = 1
+
+[[example]]
+name = "view_json_values"
+path = "examples/view_json_values.rs"

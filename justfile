@@ -1,6 +1,12 @@
 set shell := ["nu.exe", "-c"]
 
 mod:
+    cargo build --profile mod-release -p dummy --target wasm32-unknown-unknown
+    wasm-bindgen --no-typescript --target web --out-name dummy --out-dir assets/mods/ target/wasm32-unknown-unknown/mod-release/dummy.wasm
+    mv assets/mods/dummy_bg.wasm assets/mods/dummy.wasm
+    cp -r assets web/
+
+mod-debug:
     cargo build -p dummy --target wasm32-unknown-unknown
     wasm-bindgen --no-typescript --target web --out-name dummy --out-dir assets/mods/ target/wasm32-unknown-unknown/debug/dummy.wasm
     mv assets/mods/dummy_bg.wasm assets/mods/dummy.wasm

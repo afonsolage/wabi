@@ -29,10 +29,11 @@ fn main() {
         .run();
 }
 
-fn pre_startup(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let handle: Handle<WasmAsset> = asset_server.load("mods/dummy.wasm");
+#[derive(Resource, Component, Reflect, Debug, Default, Deref, DerefMut)]
+struct WasmHandler(pub Handle<WasmAsset>);
 
-    commands.insert_resource(handle);
+fn pre_startup(asset_server: Res<AssetServer>, mut commands: Commands) {
+    commands.insert_resource(WasmHandler(asset_server.load("mods/dummy.wasm")));
 }
 #[derive(Default)]
 enum Stage {
@@ -43,7 +44,7 @@ enum Stage {
 }
 
 fn startup(
-    handle: Res<Handle<WasmAsset>>,
+    handle: Res<WasmHandler>,
     wasms: Res<Assets<WasmAsset>>,
     mut runtime: ResMut<WabiRuntime>,
     mut local: Local<Stage>,

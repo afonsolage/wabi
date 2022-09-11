@@ -1,8 +1,14 @@
 use std::io::Write;
 
-use bevy_reflect::{serde::ReflectSerializer, Reflect, TypeRegistry};
+use bevy_reflect::{serde::ReflectSerializer, FromReflect, Reflect, TypeRegistry};
 
-use wabi_api::{create_type_registry, log::LogMessage, Action};
+use wabi_mod_api::{
+    ecs::Component,
+    log::LogMessage,
+    query::{QueryFetch, QueryFetchItem},
+    registry::create_type_registry,
+    Action,
+};
 
 static mut INSTANCE_DATA: InstanceData = InstanceData {
     id: 0,
@@ -93,11 +99,21 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn __wabi_entry_point() {
     // crate::test::run();
-    trace("It's really working?");
-    debug("Just like that?");
-    info("Impressive!");
-    warn("Yellow?");
-    error("Red!");
+
+    let log = LogMessage {
+        level: 3,
+        message: "Something!".into(),
+    };
+
+    let dynstryct = log.as_reflect();
+
+    let test = QueryFetch {
+        items: vec![QueryFetchItem::ReadOnly(
+            Component::from_reflect(dynstryct).unwrap(),
+        )],
+    };
+
+    send_action(&test, Action::TEST);
 }
 
 const PAGE_SIZE: usize = 65536;
@@ -118,10 +134,15 @@ pub extern "C" fn __wabi_alloc(id: u32) -> i32 {
 
 pub fn send_action<T: Reflect>(data: &T, action: Action) {
     let mut writer = ActionBufferWriter::new(action);
-    rmp_serde::encode::write(
+
+    let data = rmp_serde::encode::write(
         &mut writer,
         &ReflectSerializer::new(data, get_instance_data().get_registry()),
-    )
-    .expect("Should never fail");
-    writer.flush().expect("Should never fail");
+    );
+
+    match data {
+        Ok(()) => writer.flush().expect("Should never fail"),
+        Err(err) if action != Action::LOG => error(&format!("Failed to send message: {:?}", err)),
+        _ => panic!("Failed to serialize a log message, so, no log message."),
+    }
 }

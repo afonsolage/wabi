@@ -1,10 +1,8 @@
-use std::ops::{Deref, DerefMut, Range};
+use std::ops::{Deref, DerefMut};
 
-use bevy::utils::HashSet;
-
-// We need both, since bevy::prelude rename TypeRegistry
-use bevy_reflect::TypeRegistry;
-pub mod log;
+pub mod mod_api {
+    pub use wabi_mod_api::*;
+}
 
 pub const WABI_MOODULE_NAME: &str = "wabi";
 pub const WABI_ALLOCATOR: &str = "__wabi_alloc";
@@ -96,26 +94,4 @@ pub trait WabiRuntimePlatform {
     fn start_running_instance(&mut self, id: u32) -> Self::ModuleInstance;
     fn finish_running_instance(&mut self, id: u32, instance: Self::ModuleInstance);
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance>;
-}
-
-#[derive(num_enum::FromPrimitive, Debug)]
-#[repr(u8)]
-pub enum Action {
-    LOG,
-
-    #[default]
-    INVALID = 255,
-}
-
-pub fn create_type_registry() -> TypeRegistry {
-    let mut registry = TypeRegistry::new();
-
-    registry.register::<Range<f32>>();
-    registry.register::<HashSet<String>>();
-    registry.register::<String>();
-    registry.register::<Option<String>>();
-
-    // registry.register::<LogMessage>();
-
-    registry
 }

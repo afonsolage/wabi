@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::prelude::error;
-use wabi_api::{
+use wabi_runtime_api::{
     InstanceState, WabiInstancePlatform, WabiRuntimePlatform, WABI_ALLOCATOR, WABI_ENTRY_POINT,
     WABI_MOODULE_NAME, WABI_PROCESS_ACTION,
 };

@@ -1,14 +1,17 @@
 [package]
-name = "wabi_runtime_api"
+name = "wabi_mod_api"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-wabi_mod_api = {path = "../../mod/api"}
 
+[dependencies]
 bevy = { version = "0.9.0-dev", default-features = false }
 bevy_reflect = "0.9.0-dev"
 
-rmp-serde = "1.1"
+num_enum = "0.5"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"

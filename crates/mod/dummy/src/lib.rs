@@ -18,4 +18,4 @@
 // }
 
 pub mod test;
-mod wabi;
+pub mod wabi;
