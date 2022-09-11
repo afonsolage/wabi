@@ -20,6 +20,10 @@ pub struct WasmtimeInstance {
 }
 
 impl WabiInstancePlatform for WasmtimeInstance {
+    fn id(&self) -> u32 {
+        self.id
+    }
+
     fn run_alloc(&mut self) {
         self.buffer_offset = self.init.call(&mut self.store, self.id).unwrap();
     }

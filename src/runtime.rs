@@ -1,11 +1,14 @@
-use std::cell::UnsafeCell;
+use std::{
+    cell::RefCell,
+    sync::{Arc, Mutex},
+};
 
 use bevy::{
     prelude::{debug, error, info, trace, warn},
     reflect::{erased_serde::__private::serde::de::DeserializeSeed, serde::ReflectDeserializer},
     utils::HashMap,
 };
-use bevy_reflect::{FromReflect, TypeRegistry};
+use bevy_reflect::{FromReflect, Reflect, TypeRegistry};
 use wabi_api::{
     create_type_registry, log::LogMessage, Action, WabiInstancePlatform, WabiRuntimePlatform,
 };
@@ -19,14 +22,47 @@ compile_error!("Only target platform wasm32-unknown-unknown is supported atm.");
 
 thread_local! {
     /// Each thread can only run one wasm module at a time, since all modules functions are blocking
-    static RUNNING_INSTANCE: UnsafeCell<Option<*mut WabiInstance>> = Default::default();
+    static RUNNING_CONTEXT: RefCell<Context> = Default::default();
 }
 
 type WabiInstance = <Platform as WabiRuntimePlatform>::ModuleInstance;
 
+struct Context {
+    instance: *mut WabiInstance,
+    registry: Arc<Mutex<TypeRegistry>>,
+}
+
+impl Context {
+    fn setup(&mut self, instance: &mut WabiInstance, registry: Arc<Mutex<TypeRegistry>>) {
+        debug_assert!(self.instance.is_null());
+        self.instance = instance;
+        self.registry = registry;
+    }
+
+    fn tear_down(&mut self) {
+        self.registry = Arc::default();
+        self.instance = std::ptr::null_mut();
+    }
+
+    /// **This function should be called only on a callback from wasm module.**
+    unsafe fn instance(&self) -> &'static mut WabiInstance {
+        debug_assert!(!self.instance.is_null());
+        &mut *self.instance
+    }
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            instance: std::ptr::null_mut(),
+            registry: Default::default(),
+        }
+    }
+}
+
 pub struct WabiRuntime<P: WabiRuntimePlatform = Platform> {
     inner: P,
-    type_registry: TypeRegistry,
+    type_registry: Arc<Mutex<TypeRegistry>>,
     instances_name_map: HashMap<String, u32>,
     last_id: u32,
 }
@@ -35,7 +71,7 @@ impl Default for WabiRuntime {
     fn default() -> Self {
         Self {
             inner: Platform::new(Self::receive_action),
-            type_registry: create_type_registry(),
+            type_registry: Arc::new(Mutex::new(create_type_registry())),
             instances_name_map: Default::default(),
             last_id: 0,
         }
@@ -66,65 +102,51 @@ impl WabiRuntime {
         // TODO: Find a better place for this
         instance.run_alloc();
 
-        RUNNING_INSTANCE.with(|cell| {
-            // SAFETY: There is only one running instance per thread and all wasm
-            // callbacks are blocking, so it's safe to assume that there will be no
-            // concurrent modification between threads/tasks.
-            unsafe {
-                let previous = cell.get().replace(Some(&mut instance));
-                debug_assert!(
-                    previous.is_none(),
-                    "All running instances should be cleared before finished"
-                );
-            }
+        RUNNING_CONTEXT.with(|cell| {
+            cell.borrow_mut()
+                .setup(&mut instance, self.type_registry.clone())
         });
 
         instance.run_main();
 
-        RUNNING_INSTANCE.with(|cell| {
-            // SAFETY: There is only one running instance per thread and all wasm
-            // callbacks are blocking, so it's safe to assume that there will be no
-            // concurrent modification between threads/tasks.
-            unsafe {
-                cell.get().replace(None);
-            }
+        RUNNING_CONTEXT.with(|cell| {
+            cell.borrow_mut().tear_down();
         });
 
         self.inner.finish_running_instance(id, instance);
     }
 
-    fn receive_action(_id: u32, len: u32, action: u8) {
-        let instance = RUNNING_INSTANCE.with(|map| {
-            // SAFETY: It's only possible to reach here through a wasm callback, so there is a running instance
-            // and also a valid instance pointer on thread local state.
-            unsafe {
-                &mut *(map
-                    .get()
-                    .as_ref()
-                    .expect("Should always be a valid pointer")
-                    .expect("Should exists a pointer"))
-            }
+    fn receive_action(id: u32, len: u32, action: u8) {
+        let (registry, instance) = RUNNING_CONTEXT.with(|context| {
+            let context = context.borrow_mut();
+            (
+                context.registry.clone(),
+                // SAFETY: Receive action is called only by wasm, so there is a running instance
+                // and also a valid instance pointer on thread local state.
+                unsafe { context.instance() },
+            )
         });
 
-        Self::process_action(instance.read_buffer(len), action.into());
+        assert!(instance.id() == id);
+
+        let value = {
+            let type_registry = registry.lock().unwrap();
+            let buffer = instance.read_buffer(len);
+
+            let reflect_deserializer = ReflectDeserializer::new(&type_registry);
+            let mut deserializer = rmp_serde::Deserializer::from_read_ref(buffer);
+            reflect_deserializer.deserialize(&mut deserializer).unwrap()
+        };
+
+        trace!("Received action {:?}. Data: {:?}", action, value);
+
+        Self::process_action(instance, value, action.into());
     }
 
-    fn process_action(buffer: &[u8], action: Action) {
-        let type_registry = create_type_registry();
-        let reflect_deserializer = ReflectDeserializer::new(&type_registry);
-        let mut deserializer = rmp_serde::Deserializer::from_read_ref(buffer);
-        let value = reflect_deserializer.deserialize(&mut deserializer).unwrap();
-
-        trace!(
-            "Received action {:?} ({}). Data: {:?}",
-            action,
-            buffer.len(),
-            value
-        );
-
+    fn process_action(_instance: &mut WabiInstance, data: Box<dyn Reflect>, action: Action) {
         match action {
             Action::LOG => {
-                let LogMessage { level, message } = LogMessage::from_reflect(&*value).unwrap();
+                let LogMessage { level, message } = LogMessage::from_reflect(&*data).unwrap();
                 match level {
                     0 => trace!(message),
                     1 => debug!(message),

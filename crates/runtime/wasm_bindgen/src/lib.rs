@@ -36,6 +36,10 @@ pub struct ModInstance {
 }
 
 impl WabiInstancePlatform for ModInstance {
+    fn id(&self) -> u32 {
+        self.id
+    }
+
     fn run_alloc(&mut self) {
         self.buffer_offset = self
             .alloc

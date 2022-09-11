@@ -4,8 +4,6 @@ use bevy::utils::HashSet;
 
 // We need both, since bevy::prelude rename TypeRegistry
 use bevy_reflect::TypeRegistry;
-use log::LogMessage;
-
 pub mod log;
 
 pub const WABI_MOODULE_NAME: &str = "wabi";
@@ -82,6 +80,8 @@ impl<T: WabiInstancePlatform> InstanceState<T> {
 }
 
 pub trait WabiInstancePlatform {
+    fn id(&self) -> u32;
+
     fn run_alloc(&mut self);
     fn run_main(&mut self);
 
