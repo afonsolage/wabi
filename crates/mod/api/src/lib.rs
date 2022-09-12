@@ -7,6 +7,7 @@ pub mod registry;
 #[repr(u8)]
 pub enum Action {
     LOG,
+    QUERY,
 
     TEST = 254,
     #[default]

@@ -17,5 +17,7 @@
 //     }
 // }
 
+pub mod io;
 pub mod test;
 pub mod wabi;
+pub mod query;

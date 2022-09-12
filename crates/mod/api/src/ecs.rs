@@ -13,10 +13,16 @@ pub struct DynStruct(DynamicStruct);
 
 impl FromReflect for DynStruct {
     fn from_reflect(reflect: &dyn Reflect) -> Option<Self> {
-        if let ReflectRef::Struct(value) = reflect.reflect_ref() {
-            Some(Self(value.clone_dynamic()))
-        } else {
-            None
+        match reflect.reflect_ref() {
+            ReflectRef::Struct(v) => Some(Self(v.clone_dynamic())),
+            ReflectRef::TupleStruct(v) => Some(Self(
+                v.field(0)
+                    .expect("Should have a field")
+                    .downcast_ref::<DynamicStruct>()
+                    .unwrap()
+                    .clone_dynamic(),
+            )),
+            _ => None,
         }
     }
 }
@@ -26,15 +32,29 @@ pub struct DynEnum(DynamicEnum);
 
 impl FromReflect for DynEnum {
     fn from_reflect(reflect: &dyn Reflect) -> Option<Self> {
-        if let ReflectRef::Enum(value) = reflect.reflect_ref() {
-            Some(Self(value.clone_dynamic()))
-        } else {
-            None
+        match reflect.reflect_ref() {
+            ReflectRef::Enum(v) => Some(Self(v.clone_dynamic())),
+            ReflectRef::TupleStruct(v) => Some(Self(
+                v.field(0)
+                    .expect("Should have a field")
+                    .downcast_ref::<DynamicEnum>()
+                    .unwrap()
+                    .clone_dynamic(),
+            )),
+            _ => None,
         }
     }
 }
 
-#[derive(Reflect, FromReflect, Default)]
+// TODO: Change this to a derive when DynamicEnum derives Debug
+impl Debug for DynEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("DynEnum (DynamicEnum doesn't support debug yet)")
+            .finish()
+    }
+}
+
+#[derive(Reflect, FromReflect, Default, Debug)]
 pub enum Component {
     #[default]
     Unsupported,
@@ -48,17 +68,6 @@ impl Clone for Component {
             Component::Unsupported => Self::Unsupported,
             Component::Struct(s) => Self::Struct(DynStruct(s.0.clone_dynamic())),
             Component::Enum(s) => Self::Enum(DynEnum(s.0.clone_dynamic())),
-        }
-    }
-}
-
-// TODO: Change this to a derive when DynamicEnum derives Debug
-impl Debug for Component {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Unsupported => write!(f, "None"),
-            Self::Struct(arg0) => f.debug_tuple("Struct").field(arg0).finish(),
-            Self::Enum(_arg0) => write!(f, "DynamicEnum doesn't implement debug atm"),
         }
     }
 }

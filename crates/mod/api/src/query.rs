@@ -20,10 +20,10 @@ pub enum Filter {
     Without(String),
 }
 
-#[derive(Reflect, Default, Debug)]
+#[derive(Reflect, FromReflect, Default, Debug)]
 pub struct Query {
-    selects: Vec<Select>,
-    filters: Vec<Filter>,
+    pub selects: Vec<Select>,
+    pub filters: Vec<Filter>,
 }
 
 #[derive(Reflect, FromReflect, Default, Debug, Clone)]
@@ -35,7 +35,7 @@ pub enum QueryFetchItem {
     Mutable(Component),
 }
 
-#[derive(Reflect, Default, Debug)]
+#[derive(Reflect, FromReflect, Default, Debug)]
 pub struct QueryFetch {
     pub items: Vec<QueryFetchItem>,
 }

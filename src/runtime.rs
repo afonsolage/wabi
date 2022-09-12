@@ -8,9 +8,15 @@ use bevy::{
     reflect::{erased_serde::__private::serde::de::DeserializeSeed, serde::ReflectDeserializer},
     utils::HashMap,
 };
-use bevy_reflect::{FromReflect, Reflect, TypeRegistry};
+use bevy_reflect::{serde::ReflectSerializer, FromReflect, Reflect, TypeRegistry};
 use wabi_runtime_api::{
-    mod_api::{log::LogMessage, registry::create_type_registry, Action},
+    mod_api::{
+        ecs::{Component, DynStruct},
+        log::LogMessage,
+        query::{Query, QueryFetch, QueryFetchItem},
+        registry::create_type_registry,
+        Action,
+    },
     WabiInstancePlatform, WabiRuntimePlatform,
 };
 
@@ -129,7 +135,28 @@ impl WabiRuntime {
         self.inner.finish_running_instance(id, instance);
     }
 
-    fn receive_action(id: u32, len: u32, action: u8) {
+    fn send_response(data: Box<dyn Reflect>) -> u32 {
+        let (registry, instance) = RUNNING_CONTEXT.with(|context| {
+            let context = context.borrow_mut();
+            (
+                context.registry.clone(),
+                // SAFETY: Receive action is called only by wasm, so there is a running instance
+                // and also a valid instance pointer on thread local state.
+                unsafe { context.instance() },
+            )
+        });
+
+        let buffer = {
+            let type_registry = registry.lock().unwrap();
+            rmp_serde::encode::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+        };
+
+        instance.writer_buffer(&buffer);
+
+        buffer.len() as u32
+    }
+
+    fn receive_action(id: u32, len: u32, action: u8) -> u32 {
         let (registry, instance) = RUNNING_CONTEXT.with(|context| {
             let context = context.borrow_mut();
             (
@@ -151,13 +178,15 @@ impl WabiRuntime {
             reflect_deserializer.deserialize(&mut deserializer).unwrap()
         };
 
-        trace!("Received action {:?}. Data: {:?}", action, value);
-
-        Self::process_action(instance, value, action.into());
+        Self::process_action(instance, value, action.into())
     }
 
-    fn process_action(_instance: &mut WabiInstance, data: Box<dyn Reflect>, action: Action) {
-        match action {
+    fn process_action(_instance: &mut WabiInstance, data: Box<dyn Reflect>, action: Action) -> u32 {
+        if action != Action::LOG {
+            trace!("Received action: {:?}, data: {:?}", action, data);
+        }
+
+        let maybe_response = match action {
             Action::LOG => {
                 let LogMessage { level, message } = LogMessage::from_reflect(&*data).unwrap();
                 match level {
@@ -167,10 +196,39 @@ impl WabiRuntime {
                     3 => warn!(message),
                     4 => error!(message),
                     _ => error!("Invalid level received: {}. Message: ({})", level, message),
-                }
+                };
+                None
             }
-            Action::TEST => debug!("Received: {:?}", data),
-            Action::INVALID => error!("Invalid action received."),
+            Action::QUERY => Some(Self::process_query(
+                _instance,
+                Query::from_reflect(&*data).unwrap(),
+            )),
+            Action::TEST => {
+                debug!("Received: {:?}", data);
+                None
+            }
+            Action::INVALID => {
+                error!("Invalid action received.");
+                None
+            }
+        };
+
+        if let Some(response) = maybe_response {
+            trace!("Sending response: {:?}, data: {:?}", action, response);
+            Self::send_response(response)
+        } else {
+            0
         }
+    }
+
+    fn process_query(_instance: &mut WabiInstance, _query: Query) -> Box<dyn Reflect> {
+        let dummy = LogMessage::default();
+
+        let component = Component::Struct(DynStruct::from_reflect(dummy.as_reflect()).unwrap());
+        let dummy = QueryFetch {
+            items: vec![QueryFetchItem::ReadOnly(component)],
+        };
+
+        dummy.clone_value()
     }
 }

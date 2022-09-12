@@ -9,37 +9,48 @@ edition = "2021"
 members = ["crates/runtime/*", "crates/mod/*"]
 
 [dependencies]
+# Wabi internal crates
+wabi_runtime_api = { path = "crates/runtime/api" }
+
+# Bevy!
 bevy = { version = "0.9.0-dev", default-features = false, features = [
     "bevy_asset",
     "bevy_winit",
     "render",
     "filesystem_watcher",
 ] }
+# We need explicit Bevy Reflect due to TypeRegister
 bevy_reflect = "0.9.0-dev"
 
-wabi_runtime_api = { path = "crates/runtime/api" }
-
-futures-lite = "1.12"
-
+# Ser/de related crates
 rmp-serde = "1.1"
 
+# Wasm runtime when targeting native platforms
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 wabi_wasmtime = { path = "crates/runtime/wasmtime" }
 
+# Wasm runtime when targeting web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wabi_wasm_bindgen = { path = "crates/runtime/wasm_bindgen" }
+
 
 [dev-dependencies]
 rmpv = { version = "1.0", features = ["with-serde"] }
 serde_json = "1.0"
 
+
+# Using Bevy 0.9 due to improvements on Bevy Reflect
 [patch.crates-io]
 bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "6f2cc0b" }
 bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", rev = "6f2cc0b" }
 
+
+# Optimize Wasmtime, due to cranelift taking ages to compile in debug mode.
 [profile.dev.package."*"]
 opt-level = 3
 
+
+# Optimize mod for speed and size. Taken from Bevy examples.
 [profile.mod-release]
 # Use release profile as default values
 inherits = "release"
@@ -56,6 +67,12 @@ lto = "fat"
 # Slows compile times, marginal improvements
 codegen-units = 1
 
+
+# Examples used for debugging specific code.
 [[example]]
 name = "view_json_values"
 path = "examples/view_json_values.rs"
+
+[[example]]
+name = "reflect_serde"
+path = "examples/reflect_serde.rs"

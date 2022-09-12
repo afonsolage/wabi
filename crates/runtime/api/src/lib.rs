@@ -84,12 +84,13 @@ pub trait WabiInstancePlatform {
     fn run_main(&mut self);
 
     fn read_buffer(&mut self, len: u32) -> &[u8];
+    fn writer_buffer(&mut self, buffer: &[u8]);
 }
 
 pub trait WabiRuntimePlatform {
     type ModuleInstance: WabiInstancePlatform;
 
-    fn new(process_action: fn(u32, u32, u8)) -> Self;
+    fn new(process_action: fn(u32, u32, u8) -> u32) -> Self;
     fn load_module(&mut self, id: u32, buffer: &[u8]);
     fn start_running_instance(&mut self, id: u32) -> Self::ModuleInstance;
     fn finish_running_instance(&mut self, id: u32, instance: Self::ModuleInstance);

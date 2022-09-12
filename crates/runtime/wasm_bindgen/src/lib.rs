@@ -61,6 +61,15 @@ impl WabiInstancePlatform for ModInstance {
 
         &self.buffer
     }
+
+    fn writer_buffer(&mut self, buffer: &[u8]) {
+        Uint8Array::new_with_byte_offset_and_length(
+            &self.memory.buffer(),
+            self.buffer_offset,
+            buffer.len() as u32,
+        )
+        .copy_from(buffer);
+    }
 }
 
 impl ModInstance {
@@ -92,14 +101,14 @@ impl ModInstance {
 }
 
 pub struct RuntimeData {
-    pub process_action: fn(u32, u32, u8),
+    pub process_action: fn(u32, u32, u8) -> u32,
     pub modules: HashMap<u32, InstanceState<ModInstance>>,
 }
 
 impl Default for RuntimeData {
     fn default() -> Self {
         Self {
-            process_action: |_, _, _| (),
+            process_action: |_, _, _| 0,
             modules: Default::default(),
         }
     }
@@ -110,7 +119,7 @@ pub struct WasmRuntime;
 impl WabiRuntimePlatform for WasmRuntime {
     type ModuleInstance = ModInstance;
 
-    fn new(process_action: fn(u32, u32, u8)) -> Self {
+    fn new(process_action: fn(u32, u32, u8) -> u32) -> Self {
         // TODO: Find a better and reliable way of inject imports
         js_sys::eval(
             format!(
@@ -191,17 +200,9 @@ impl WabiRuntimePlatform for WasmRuntime {
     }
 }
 
-// pub fn deserialize(buffer: &[u8]) {
-//     let registry = TypeRegistry::default();
-//     let deserializer = ReflectDeserializer::new(&registry);
-//     let mut bin_code =
-//         bincode::Deserializer::from_slice(buffer, bincode::config::DefaultOptions::default());
-//     let value = deserializer.deserialize(&mut bin_code).unwrap();
-// }
-
 pub mod wabi {
     #[wasm_bindgen::prelude::wasm_bindgen]
-    pub fn __wabi_process_action(id: u32, len: usize, action: u8) {
-        (super::get_runtime_data().process_action)(id, len as u32, action);
+    pub fn __wabi_process_action(id: u32, len: usize, action: u8) -> u32 {
+        (super::get_runtime_data().process_action)(id, len as u32, action)
     }
 }

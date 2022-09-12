@@ -29,13 +29,21 @@ impl WabiInstancePlatform for WasmtimeInstance {
     }
 
     fn run_main(&mut self) {
-        self.main.call(&mut self.store, ()).unwrap();
+        if let Err(err) = self.main.call(&mut self.store, ()) {
+            error!("Failed to run main: {}", err);
+        }
     }
 
     fn read_buffer(&mut self, len: u32) -> &[u8] {
         let begin = self.buffer_offset as usize;
         let end = begin + len as usize;
         &self.memory.data(&mut self.store)[begin..end]
+    }
+
+    fn writer_buffer(&mut self, buffer: &[u8]) {
+        self.memory
+            .write(&mut self.store, self.buffer_offset as usize, buffer)
+            .unwrap();
     }
 }
 
@@ -49,7 +57,7 @@ pub struct WasmtimeRuntime {
 impl WabiRuntimePlatform for WasmtimeRuntime {
     type ModuleInstance = WasmtimeInstance;
 
-    fn new(process_action: fn(u32, u32, u8)) -> Self {
+    fn new(process_action: fn(u32, u32, u8) -> u32) -> Self {
         let engine = Engine::default();
 
         let mut linker = Linker::new(&engine);
@@ -69,7 +77,7 @@ impl WabiRuntimePlatform for WasmtimeRuntime {
                 WABI_MOODULE_NAME,
                 WABI_PROCESS_ACTION,
                 move |_caller: Caller<'_, ()>, id: u32, len: u32, action: u32| {
-                    (process_action)(id, len, action as u8);
+                    (process_action)(id, len, action as u8)
                 },
             )
             .unwrap();
