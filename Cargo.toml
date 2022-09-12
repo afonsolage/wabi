@@ -8,6 +8,12 @@ edition = "2021"
 [workspace]
 members = ["crates/runtime/*", "crates/mod/*"]
 
+
+[features]
+default = ["json"]
+
+json = ["dep:serde_json"]
+
 [dependencies]
 # Wabi internal crates
 wabi_runtime_api = { path = "crates/runtime/api" }
@@ -24,6 +30,7 @@ bevy_reflect = "0.9.0-dev"
 
 # Ser/de related crates
 rmp-serde = "1.1"
+serde_json = { version = "1", optional = true }
 
 # Wasm runtime when targeting native platforms
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

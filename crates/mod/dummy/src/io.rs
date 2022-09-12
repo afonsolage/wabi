@@ -54,7 +54,17 @@ pub fn send_action<T: Reflect>(data: &T, action: Action) -> Option<Box<dyn Refle
 
     let registry = get_instance_data().get_registry();
 
-    let data = rmp_serde::encode::write(&mut writer, &ReflectSerializer::new(data, registry));
+    let reflect_serializer = ReflectSerializer::new(data, registry);
+    let data = {
+        #[cfg(not(feature = "json"))]
+        {
+            rmp_serde::encode::write(&mut writer, &reflect_serializer)
+        }
+        #[cfg(feature = "json")]
+        {
+            serde_json::to_writer(&mut writer, &reflect_serializer)
+        }
+    };
 
     match data {
         Ok(()) => writer.flush().expect("Should never fail"),
@@ -66,7 +76,17 @@ pub fn send_action<T: Reflect>(data: &T, action: Action) -> Option<Box<dyn Refle
         None
     } else {
         let reflect_deserializer = ReflectDeserializer::new(registry);
-        let mut deserializer = rmp_serde::Deserializer::from_read_ref(writer.response_buffer());
+        let mut deserializer = {
+            #[cfg(not(feature = "json"))]
+            {
+                rmp_serde::Deserializer::from_read_ref(writer.response_buffer())
+            }
+            #[cfg(feature = "json")]
+            {
+                serde_json::Deserializer::from_slice(writer.response_buffer())
+            }
+        };
+
         match reflect_deserializer.deserialize(&mut deserializer) {
             Ok(response) => Some(response),
             Err(err) => {

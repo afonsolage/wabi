@@ -8,8 +8,15 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = ["json"]
+
+json = ["dep:serde_json"]
+
 [dependencies]
+wabi_mod_api = { path = "../api" }
+
 bevy_reflect = { version = "0.9.0-dev" }
 
-wabi_mod_api = { path = "../api" }
 rmp-serde = "1.1"
+serde_json = { version = "1", optional = true }

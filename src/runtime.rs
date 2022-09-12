@@ -148,7 +148,14 @@ impl WabiRuntime {
 
         let buffer = {
             let type_registry = registry.lock().unwrap();
-            rmp_serde::encode::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+            #[cfg(not(feature = "json"))]
+            {
+                rmp_serde::encode::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+            }
+            #[cfg(feature = "json")]
+            {
+                serde_json::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+            }
         };
 
         instance.writer_buffer(&buffer);
@@ -174,7 +181,19 @@ impl WabiRuntime {
             let buffer = instance.read_buffer(len);
 
             let reflect_deserializer = ReflectDeserializer::new(&type_registry);
-            let mut deserializer = rmp_serde::Deserializer::from_read_ref(buffer);
+
+            let mut deserializer = {
+                #[cfg(not(feature = "json"))]
+                {
+                    rmp_serde::Deserializer::from_read_ref(buffer)
+                }
+
+                #[cfg(feature = "json")]
+                {
+                    serde_json::Deserializer::from_slice(buffer)
+                }
+            };
+
             reflect_deserializer.deserialize(&mut deserializer).unwrap()
         };
 
