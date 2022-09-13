@@ -158,7 +158,7 @@ fn dynamic_query(world: &World, query: query::Query) {
         })
         .collect::<Vec<_>>();
 
-    println!("Entity components: {:#?}", entity_components);
+    println!("Entity components: {:?}", entity_components);
 }
 
 fn test(world: &mut World) {
@@ -170,6 +170,11 @@ fn test(world: &mut World) {
     };
 
     dynamic_query(world, query);
+
+    let mut state = world.query::<(Entity, &Transform)>();
+    for (entity, t) in state.iter(world) {
+        println!("Entity: {:?}, T: {:?}", entity, t);
+    }
 
     std::process::exit(0);
 }
