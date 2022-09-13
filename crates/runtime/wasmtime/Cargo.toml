@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 wabi_runtime_api = { path = "../api" }
 
-
-bevy = { version = "0.8", default-features = false }
+bevy = { version = "0.9.0-dev", default-features = false }
 
 wasmtime = "0.40"
