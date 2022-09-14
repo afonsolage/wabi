@@ -1,6 +1,6 @@
-use bevy_reflect::{serde::ReflectSerializer, FromReflect, Reflect};
+use bevy_reflect::{serde::ReflectSerializer, Reflect};
 use wabi_runtime_api::mod_api::{
-    ecs::{Component, DynStruct},
+    ecs::Component,
     log::LogMessage,
     query::{QueryFetch, QueryFetchItem},
     registry::create_type_registry,
@@ -9,10 +9,13 @@ use wabi_runtime_api::mod_api::{
 fn main() {
     let log = LogMessage::default();
 
-    let component = Component::Struct(DynStruct::from_reflect(log.as_reflect()).unwrap());
+    let component = Component::from(log.as_reflect());
 
     let log = QueryFetch {
-        items: vec![QueryFetchItem::ReadOnly(component)],
+        items: vec![QueryFetchItem {
+            entity: Default::default(),
+            components: vec![component],
+        }],
     };
 
     println(log);

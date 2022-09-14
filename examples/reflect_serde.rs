@@ -4,7 +4,7 @@ use bevy_reflect::{
     FromReflect, Reflect,
 };
 use wabi_runtime_api::mod_api::{
-    ecs::{Component, DynEnum, DynStruct},
+    ecs::Component,
     log::LogMessage,
     query::{QueryFetch, QueryFetchItem},
     registry::create_type_registry,
@@ -14,14 +14,13 @@ fn main() {
     let dummy = LogMessage::default();
     let maybe = Some("Nested enum".to_string());
 
-    let component_struct = Component::Struct(DynStruct::from_reflect(dummy.as_reflect()).unwrap());
-    let simple_enum = Component::Enum(DynEnum::from_reflect(maybe.as_reflect()).unwrap());
+    let component_struct = Component::from(dummy.as_reflect());
+    let simple_enum = Component::from(maybe.as_reflect());
     let data = QueryFetch {
-        items: vec![
-            QueryFetchItem::ReadOnly(component_struct),
-            QueryFetchItem::Mutable(simple_enum),
-        ],
-        // items: vec![],
+        items: vec![QueryFetchItem {
+            entity: Default::default(),
+            components: vec![component_struct, simple_enum],
+        }],
     };
 
     let type_registry = create_type_registry();

@@ -10,13 +10,7 @@ use bevy::{
 };
 use bevy_reflect::{serde::ReflectSerializer, FromReflect, Reflect, TypeRegistry};
 use wabi_runtime_api::{
-    mod_api::{
-        ecs::{Component, DynStruct},
-        log::LogMessage,
-        query::{Query, QueryFetch, QueryFetchItem},
-        registry::create_type_registry,
-        Action,
-    },
+    mod_api::{log::LogMessage, query::Query, registry::create_type_registry, Action},
     WabiInstancePlatform, WabiRuntimePlatform,
 };
 
@@ -241,13 +235,15 @@ impl WabiRuntime {
     }
 
     fn process_query(_instance: &mut WabiInstance, _query: Query) -> Box<dyn Reflect> {
-        let dummy = LogMessage::default();
+        // let dummy = LogMessage::default();
 
-        let component = Component::Struct(DynStruct::from_reflect(dummy.as_reflect()).unwrap());
-        let dummy = QueryFetch {
-            items: vec![QueryFetchItem::ReadOnly(component)],
-        };
+        // let component = Component(ReflectAny::from_reflect(dummy.as_reflect()).unwrap());
+        // let dummy = QueryFetch {
+        //     items: vec![QueryFetchItem::ReadOnly(component)],
+        // };
 
-        dummy.clone_value()
+        // dummy.clone_value()
+
+        todo!()
     }
 }
