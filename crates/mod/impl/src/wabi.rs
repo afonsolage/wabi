@@ -28,7 +28,7 @@ pub fn log<const L: u8>(message: String) {
 
 #[no_mangle]
 pub extern "C" fn __wabi_entry_point() {
-    let result = query::query(&["Transform"]);
+    let result = query::query(&["bevy_transform::components::transform::Transform"]);
     debug(format!("Query result: {:?}", result));
 }
 

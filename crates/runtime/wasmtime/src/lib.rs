@@ -40,7 +40,7 @@ impl WabiInstancePlatform for WasmtimeInstance {
         &self.memory.data(&mut self.store)[begin..end]
     }
 
-    fn writer_buffer(&mut self, buffer: &[u8]) {
+    fn write_buffer(&mut self, buffer: &[u8]) {
         self.memory
             .write(&mut self.store, self.buffer_offset as usize, buffer)
             .unwrap();

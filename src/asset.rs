@@ -6,7 +6,10 @@ use bevy::{
 
 #[derive(Debug, Default, TypeUuid, Reflect)]
 #[uuid = "44ceeab1-69e2-4afb-b0e2-7d97d8d0bdda"]
-pub struct WasmAsset(pub Vec<u8>);
+pub struct WasmAsset {
+    pub name: String,
+    pub(crate) buffer: Vec<u8>,
+}
 
 impl AssetLoader for WasmAsset {
     fn load<'a>(
@@ -15,7 +18,15 @@ impl AssetLoader for WasmAsset {
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> bevy::utils::BoxedFuture<'a, Result<(), bevy::asset::Error>> {
         Box::pin(async move {
-            load_context.set_default_asset(LoadedAsset::new(WasmAsset(Vec::from(bytes))));
+            load_context.set_default_asset(LoadedAsset::new(WasmAsset {
+                name: load_context
+                    .path()
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
+                buffer: Vec::from(bytes),
+            }));
             Ok(())
         })
     }
@@ -24,11 +35,3 @@ impl AssetLoader for WasmAsset {
         &["wasm"]
     }
 }
-
-// pub(crate) fn hot_reload_wasm_modules(mut assets_events: EventReader<AssetEvent<WasmAsset>>) {
-//     for evt in assets_events.iter() {
-//         if let AssetEvent::Modified { handle } = evt {
-//             //
-//         }
-//     }
-// }

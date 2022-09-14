@@ -62,7 +62,7 @@ impl WabiInstancePlatform for ModInstance {
         &self.buffer
     }
 
-    fn writer_buffer(&mut self, buffer: &[u8]) {
+    fn write_buffer(&mut self, buffer: &[u8]) {
         Uint8Array::new_with_byte_offset_and_length(
             &self.memory.buffer(),
             self.buffer_offset,

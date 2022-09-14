@@ -84,7 +84,7 @@ pub trait WabiInstancePlatform {
     fn run_main(&mut self);
 
     fn read_buffer(&mut self, len: u32) -> &[u8];
-    fn writer_buffer(&mut self, buffer: &[u8]);
+    fn write_buffer(&mut self, buffer: &[u8]);
 }
 
 pub trait WabiRuntimePlatform {

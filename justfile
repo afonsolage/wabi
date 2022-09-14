@@ -1,15 +1,15 @@
 set shell := ["nu.exe", "-c"]
 
 mod:
-    cargo build --profile mod-release -p dummy --target wasm32-unknown-unknown
-    wasm-bindgen --no-typescript --target web --out-name dummy --out-dir assets/mods/ target/wasm32-unknown-unknown/mod-release/dummy.wasm
-    mv assets/mods/dummy_bg.wasm assets/mods/dummy.wasm
+    cargo build --profile mod-release -p wabi_mod_impl --target wasm32-unknown-unknown
+    wasm-bindgen --no-typescript --target web --out-name impl --out-dir assets/mods/ target/wasm32-unknown-unknown/mod-release/wabi_mod_impl.wasm
+    mv assets/mods/impl_bg.wasm assets/mods/impl.wasm
     cp -r assets web/
 
 mod-debug:
-    cargo build -p dummy --target wasm32-unknown-unknown
-    wasm-bindgen --no-typescript --target web --out-name dummy --out-dir assets/mods/ target/wasm32-unknown-unknown/debug/dummy.wasm
-    mv assets/mods/dummy_bg.wasm assets/mods/dummy.wasm
+    cargo build -p impl --target wasm32-unknown-unknown
+    wasm-bindgen --no-typescript --target web --out-name impl --out-dir assets/mods/ target/wasm32-unknown-unknown/debug/impl.wasm
+    mv assets/mods/impl_bg.wasm assets/mods/impl.wasm
     cp -r assets web/
 
 build:
