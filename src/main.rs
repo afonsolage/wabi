@@ -82,12 +82,9 @@ fn test(world: &mut World) {
         filters: vec![],
     };
 
-    dynamic_query(world, query);
+    let result = dynamic_query(world, query);
 
-    let mut state = world.query::<(Entity, &Transform)>();
-    for (entity, t) in state.iter(world) {
-        println!("Entity: {:?}, T: {:?}", entity, t);
-    }
+    println!("{:#?}", result);
 
     std::process::exit(0);
 }

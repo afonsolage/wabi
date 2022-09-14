@@ -32,6 +32,8 @@ bevy_reflect = "0.9.0-dev"
 rmp-serde = "1.1"
 serde_json = { version = "1", optional = true }
 
+smallvec = "1.9"
+
 # Wasm runtime when targeting native platforms
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 wabi_wasmtime = { path = "crates/runtime/wasmtime" }

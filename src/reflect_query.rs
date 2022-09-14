@@ -2,13 +2,19 @@ use bevy::{
     ecs::component::ComponentInfo,
     prelude::{AppTypeRegistry, ReflectComponent, World},
 };
-use wabi_runtime_api::mod_api::query::{Filter, Query};
+
+use smallvec::SmallVec;
+use wabi_runtime_api::mod_api::{
+    ecs::{Component, Entity},
+    query::{Filter, Query, QueryFetch, QueryFetchItem},
+};
 
 fn get_component_info<'w>(world: &'w World, name: &str) -> Option<&'w ComponentInfo> {
     world.components().iter().find(|c| c.name() == name)
 }
 
-pub(crate) fn dynamic_query(world: &World, query: Query) {
+// TODO: Add error handling, since there is no point in panicking when running commands from wasm modules.
+pub(crate) fn dynamic_query(world: &World, query: Query) -> QueryFetch {
     let registry_arc = world.resource::<AppTypeRegistry>();
 
     let with = query
@@ -18,7 +24,7 @@ pub(crate) fn dynamic_query(world: &World, query: Query) {
             Filter::With(name) => get_component_info(world, name),
             _ => None,
         })
-        .collect::<Vec<_>>();
+        .collect::<SmallVec<[_; 8]>>();
 
     let without = query
         .filters
@@ -27,13 +33,13 @@ pub(crate) fn dynamic_query(world: &World, query: Query) {
             Filter::Without(name) => get_component_info(world, name),
             _ => None,
         })
-        .collect::<Vec<_>>();
+        .collect::<SmallVec<[_; 8]>>();
 
     let components = query
         .components
         .iter()
         .filter_map(|name| get_component_info(world, name))
-        .collect::<Vec<_>>();
+        .collect::<SmallVec<[_; 8]>>();
 
     let entities = world
         .archetypes()
@@ -52,27 +58,28 @@ pub(crate) fn dynamic_query(world: &World, query: Query) {
 
     let registry_guard = registry_arc.internal.read();
 
-    let entity_components = entities
-        .map(|entity| {
-            (
-                entity,
-                components
-                    .iter()
-                    .map(|component| {
-                        let reflect_component = {
-                            registry_guard
-                                .get(component.type_id().unwrap())
-                                .unwrap()
-                                .data::<ReflectComponent>()
-                                .unwrap()
-                        };
+    let items = entities
+        .map(|entity| QueryFetchItem {
+            entity: Entity {
+                id: entity.id(),
+                generation: entity.generation(),
+            },
+            components: components
+                .iter()
+                .map(|component| {
+                    let reflect_component = {
+                        registry_guard
+                            .get(component.type_id().unwrap())
+                            .unwrap()
+                            .data::<ReflectComponent>()
+                            .unwrap()
+                    };
 
-                        reflect_component.reflect(world, *entity).unwrap()
-                    })
-                    .collect::<Vec<_>>(),
-            )
+                    Component::from(reflect_component.reflect(world, *entity).unwrap())
+                })
+                .collect::<Vec<_>>(),
         })
         .collect::<Vec<_>>();
 
-    println!("Entity components: {:?}", entity_components);
+    QueryFetch { items }
 }
