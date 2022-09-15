@@ -4,8 +4,8 @@ macro_rules! impl_type {
         pub struct $ty(Box<dyn Reflect>);
 
         impl bevy_reflect::Reflect for $ty {
-            fn type_name(&self) -> &str {
-                self.0.type_name()
+            fn type_path(&self) -> &str {
+                self.0.type_path()
             }
 
             fn get_type_info(&self) -> &'static bevy_reflect::TypeInfo {
@@ -68,6 +68,33 @@ macro_rules! impl_type {
         impl From<Box<dyn Reflect>> for $ty {
             fn from(reflect: Box<dyn Reflect>) -> Self {
                 Self(reflect)
+            }
+        }
+
+        impl bevy_reflect::TypePath for $ty {
+            #[inline]
+            fn type_path() -> &'static str {
+                concat!(concat!(module_path!(), "::"), stringify!($ty))
+            }
+            #[inline]
+            fn short_type_name_base() -> &'static str {
+                const IDENT_POS: usize = module_path!().len() + 2;
+                const GENERIC_POS: usize = IDENT_POS + stringify!($ty).len();
+                &<Self as bevy_reflect::TypePath>::type_path()[IDENT_POS..GENERIC_POS]
+            }
+            #[inline]
+            fn short_type_name() -> &'static str {
+                const IDENT_POS: usize = module_path!().len() + 2;
+                &<Self as bevy_reflect::TypePath>::type_path()[IDENT_POS..]
+            }
+            #[inline]
+            fn module_path() -> &'static str {
+                &<Self as bevy_reflect::TypePath>::type_path()[..module_path!().len()]
+            }
+            #[inline]
+            fn crate_name() -> &'static str {
+                &<Self as bevy_reflect::TypePath>::type_path()
+                    [..bevy_reflect::utility::crate_name_len(module_path!())]
             }
         }
     };

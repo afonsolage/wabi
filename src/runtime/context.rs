@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::prelude::{debug, error, info, trace, warn, World};
 use bevy_reflect::{
     erased_serde::__private::serde::de::DeserializeSeed,
@@ -18,7 +16,7 @@ use super::WabiInstance;
 pub(super) struct Context {
     instance: *mut WabiInstance,
     world: *mut World,
-    registry: Arc<Mutex<TypeRegistry>>,
+    registry: *const TypeRegistry,
 }
 
 impl Context {
@@ -38,11 +36,19 @@ impl Context {
         unsafe { &mut *self.world }
     }
 
+    /// **This function should be called only on a callback from wasm module.**
+    fn registry(&self) -> &'static TypeRegistry {
+        debug_assert!(!self.registry.is_null());
+
+        // SAFETY: Context only runs after setup and in an exclusive system
+        unsafe { &*self.registry }
+    }
+
     pub(super) fn setup(
         &mut self,
         world: &mut World,
         instance: &mut WabiInstance,
-        registry: Arc<Mutex<TypeRegistry>>,
+        registry: &TypeRegistry,
     ) {
         debug_assert!(self.instance.is_null());
         self.instance = instance;
@@ -51,15 +57,15 @@ impl Context {
     }
 
     pub(super) fn teardown(&mut self) {
-        self.registry = Arc::default();
+        self.registry = std::ptr::null();
         self.instance = std::ptr::null_mut();
+        self.world = std::ptr::null_mut();
     }
 
     fn deserialize_data(&self, len: u32) -> Box<dyn Reflect> {
-        let type_registry = self.registry.lock().unwrap();
         let buffer = self.instance().read_buffer(len);
 
-        let reflect_deserializer = ReflectDeserializer::new(&type_registry);
+        let reflect_deserializer = ReflectDeserializer::new(self.registry());
 
         let mut deserializer = {
             #[cfg(not(feature = "json"))]
@@ -77,14 +83,13 @@ impl Context {
     }
 
     fn serialize_data(&self, data: Box<dyn Reflect>) -> Vec<u8> {
-        let type_registry = self.registry.lock().unwrap();
         #[cfg(not(feature = "json"))]
         {
-            rmp_serde::encode::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+            rmp_serde::encode::to_vec(&ReflectSerializer::new(&*data, self.registry())).unwrap()
         }
         #[cfg(feature = "json")]
         {
-            serde_json::to_vec(&ReflectSerializer::new(&*data, &type_registry)).unwrap()
+            serde_json::to_vec(&ReflectSerializer::new(&*data, self.registry())).unwrap()
         }
     }
 
@@ -148,7 +153,7 @@ impl Default for Context {
         Self {
             instance: std::ptr::null_mut(),
             world: std::ptr::null_mut(),
-            registry: Default::default(),
+            registry: std::ptr::null(),
         }
     }
 }

@@ -50,8 +50,10 @@ serde_json = "1.0"
 
 # Using Bevy 0.9 due to improvements on Bevy Reflect
 [patch.crates-io]
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "404b4fc" }
-bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", rev = "404b4fc" }
+# Switch back to bevy main when #5805 gets merged
+bevy = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
+bevy_reflect = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
+bevy_math = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
 
 
 # Optimize Wasmtime, due to cranelift taking ages to compile in debug mode.

@@ -1,9 +1,4 @@
-use std::{
-    cell::RefCell,
-    error::Error,
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::{cell::RefCell, error::Error, fmt::Display};
 
 use bevy::{
     prelude::{error, trace, CoreStage, IntoExclusiveSystem, Plugin, Resource, World},
@@ -60,9 +55,9 @@ impl Error for WabiError {}
 #[derive(Resource)]
 pub struct WabiRuntime<P: WabiRuntimePlatform = Platform> {
     inner: P,
-    type_registry: Arc<Mutex<TypeRegistry>>,
     instances_name_map: HashMap<String, u32>,
     last_id: u32,
+    type_registry: TypeRegistry,
 }
 
 impl WabiRuntime {
@@ -114,7 +109,7 @@ impl WabiRuntime {
         // let alloc = Instant::now();
         RUNNING_CONTEXT.with(|cell| {
             cell.borrow_mut()
-                .setup(world, &mut instance, self.type_registry.clone())
+                .setup(world, &mut instance, &self.type_registry)
         });
 
         instance.run_main();
@@ -145,9 +140,9 @@ impl Default for WabiRuntime {
     fn default() -> Self {
         Self {
             inner: Platform::new(Self::process_action),
-            type_registry: Arc::new(Mutex::new(create_type_registry())),
             instances_name_map: Default::default(),
             last_id: 0,
+            type_registry: create_type_registry(),
         }
     }
 }
