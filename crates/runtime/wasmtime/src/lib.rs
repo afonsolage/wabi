@@ -122,6 +122,13 @@ impl WabiRuntimePlatform for WasmtimeRuntime {
         );
     }
 
+    fn is_loading(&self, id: u32) -> bool {
+        self.instances
+            .get(&id)
+            .expect("Module should exists")
+            .is_loading()
+    }
+
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance> {
         if let Some(InstanceState::Idle(instance)) = self.instances.get_mut(&id) {
             Some(instance)

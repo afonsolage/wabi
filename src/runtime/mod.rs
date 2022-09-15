@@ -98,6 +98,10 @@ impl WabiRuntime {
     pub fn run(&mut self, world: &mut World, name: &str) -> Result<(), WabiError> {
         let id = self.get_module_id(name)?;
 
+        if self.inner.is_loading(id) {
+            return Ok(());
+        }
+
         trace!("Running module {}", name);
 
         // let begin = Instant::now();

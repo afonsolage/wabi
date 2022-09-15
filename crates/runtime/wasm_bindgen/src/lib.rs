@@ -149,6 +149,8 @@ impl WabiRuntimePlatform for WasmRuntime {
 
         info!("Imports: {:?}", imports);
 
+        get_runtime_data().modules.insert(id, InstanceState::Loading);
+
         spawn_local(async move {
             let result = JsFuture::from(WebAssembly::instantiate_buffer(&buffer, &imports)).await;
 
@@ -171,6 +173,14 @@ impl WabiRuntimePlatform for WasmRuntime {
                 .modules
                 .insert(id, InstanceState::Idle(ModInstance::new(id, instance)));
         });
+    }
+
+    fn is_loading(&self, id: u32) -> bool {
+        get_runtime_data()
+            .modules
+            .get(&id)
+            .expect("Module instance should exists")
+            .is_loading()
     }
 
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance> {

@@ -11,6 +11,7 @@ pub const WABI_PROCESS_ACTION: &str = "__wabi_process_action";
 
 pub enum InstanceState<T: WabiInstancePlatform> {
     None,
+    Loading,
     Idle(T),
     Running,
 }
@@ -29,6 +30,9 @@ impl<T: WabiInstancePlatform> Deref for InstanceState<T> {
             InstanceState::None => {
                 panic!("Cannot deref a non-existing module instance")
             }
+            InstanceState::Loading => {
+                panic!("Cannot deref a lading module instance")
+            }
             InstanceState::Idle(t) => t,
             InstanceState::Running => {
                 panic!("Cannot deref a running module instance")
@@ -42,6 +46,9 @@ impl<T: WabiInstancePlatform> DerefMut for InstanceState<T> {
         match self {
             InstanceState::None => {
                 panic!("Cannot deref mut a non-existing module instance")
+            }
+            InstanceState::Loading => {
+                panic!("Cannot deref mut a loading module instance")
             }
             InstanceState::Idle(t) => t,
             InstanceState::Running => {
@@ -64,10 +71,17 @@ impl<T: WabiInstancePlatform> InstanceState<T> {
         matches!(self, InstanceState::None)
     }
 
+    pub fn is_loading(&self) -> bool {
+        matches!(self, InstanceState::Loading)
+    }
+
     pub fn take(self) -> T {
         match self {
             InstanceState::None => {
                 panic!("Cannot take a non-existing module instance")
+            }
+            InstanceState::Loading => {
+                panic!("Cannot take a loading module instance")
             }
             InstanceState::Idle(t) => t,
             InstanceState::Running => {
@@ -95,4 +109,6 @@ pub trait WabiRuntimePlatform {
     fn start_running_instance(&mut self, id: u32) -> Self::ModuleInstance;
     fn finish_running_instance(&mut self, id: u32, instance: Self::ModuleInstance);
     fn get_instance(&mut self, id: u32) -> Option<&mut Self::ModuleInstance>;
+
+    fn is_loading(&self, id: u32) -> bool;
 }
