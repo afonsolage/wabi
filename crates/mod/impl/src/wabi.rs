@@ -1,4 +1,4 @@
-use wabi_mod_api::{log::LogMessage, Action};
+use wabi_mod_api::{log::LogMessage, query::Filter, Action};
 
 use crate::{io::send_action, query};
 
@@ -28,8 +28,11 @@ pub fn log<const L: u8>(message: String) {
 
 #[no_mangle]
 pub extern "C" fn __wabi_entry_point() {
-    let result = query::query(&["bevy_transform::components::transform::Transform"]);
-    debug(format!("Query result: {:?}", result));
+    let result = query::query(
+        &["bevy_transform::components::transform::Transform"],
+        &[Filter::With("bevy_core::name::Name".to_string())],
+    );
+    trace(format!("Result: {:?}", result));
 }
 
 macro_rules! unwrap {

@@ -9,8 +9,12 @@ use wabi_runtime_api::mod_api::{
     query::{Filter, Query, QueryFetch, QueryFetchItem},
 };
 
-fn get_component_info<'w>(world: &'w World, name: &str) -> Option<&'w ComponentInfo> {
-    world.components().iter().find(|c| c.name() == name)
+fn get_component_info<'w>(world: &'w World, name: &str) -> &'w ComponentInfo {
+    world
+        .components()
+        .iter()
+        .find(|c| c.name() == name)
+        .expect("Should exists")
 }
 
 // TODO: Add error handling, since there is no point in panicking when running commands from wasm modules.
@@ -21,7 +25,7 @@ pub(crate) fn dynamic_query(world: &World, query: Query) -> QueryFetch {
         .filters
         .iter()
         .filter_map(|f| match f {
-            Filter::With(name) => get_component_info(world, name),
+            Filter::With(name) => Some(get_component_info(world, name)),
             _ => None,
         })
         .collect::<SmallVec<[_; 8]>>();
@@ -30,7 +34,7 @@ pub(crate) fn dynamic_query(world: &World, query: Query) -> QueryFetch {
         .filters
         .iter()
         .filter_map(|f| match f {
-            Filter::Without(name) => get_component_info(world, name),
+            Filter::Without(name) => Some(get_component_info(world, name)),
             _ => None,
         })
         .collect::<SmallVec<[_; 8]>>();
@@ -38,7 +42,7 @@ pub(crate) fn dynamic_query(world: &World, query: Query) -> QueryFetch {
     let components = query
         .components
         .iter()
-        .filter_map(|name| get_component_info(world, name))
+        .map(|name| get_component_info(world, name))
         .collect::<SmallVec<[_; 8]>>();
 
     let entities = world

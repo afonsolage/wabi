@@ -2,7 +2,7 @@ use bevy_reflect::{FromReflect, Reflect};
 
 use crate::ecs::{Component, Entity};
 
-#[derive(Reflect, Default, Debug, FromReflect)]
+#[derive(Reflect, Default, Debug, FromReflect, Clone)]
 pub enum Filter {
     #[default]
     None,

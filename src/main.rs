@@ -55,7 +55,7 @@ fn scene_setup(
         material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
         transform: Transform::from_xyz(0.0, 0.5, 0.0),
         ..default()
-    });
+    }).insert(Name::new("Cube"));
     // light
     commands.spawn_bundle(PointLightBundle {
         point_light: PointLight {

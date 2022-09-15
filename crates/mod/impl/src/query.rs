@@ -1,15 +1,15 @@
 use bevy_reflect::FromReflect;
 use wabi_mod_api::{
-    query::{Query, QueryFetch},
+    query::{Query, QueryFetch, Filter},
     Action,
 };
 
 use crate::{io::send_action, wabi::unwrap};
 
-pub fn query(components: &[&'static str]) -> QueryFetch {
+pub fn query(components: &[&'static str], filters: &[Filter]) -> QueryFetch {
     let query = Query {
         components: components.iter().map(ToString::to_string).collect(),
-        filters: vec![],
+        filters: filters.into(),
     };
 
     let result = unwrap!(send_action(&query, Action::QUERY));
