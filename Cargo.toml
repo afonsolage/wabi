@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["crates/runtime/*", "crates/mod/*"]
+members = ["crates/runtime/*", "crates/mod/*", "crates/utilities/*"]
 
 
 [features]
@@ -17,6 +17,7 @@ json = ["dep:serde_json"]
 [dependencies]
 # Wabi internal crates
 wabi_runtime_api = { path = "crates/runtime/api" }
+wabi_macros = { path = "crates/utilities/macros" }
 
 # Bevy!
 bevy = { version = "0.9.0-dev", default-features = false, features = [
@@ -87,3 +88,7 @@ path = "examples/view_json_values.rs"
 [[example]]
 name = "reflect_serde"
 path = "examples/reflect_serde.rs"
+
+[[example]]
+name = "proxy_macro"
+path = "examples/proxy_macro.rs"

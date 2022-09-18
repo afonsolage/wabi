@@ -10,6 +10,7 @@ use wabi_runtime_api::{
     mod_api::registry::create_type_registry, WabiInstancePlatform, WabiRuntimePlatform,
 };
 
+mod proxy;
 mod context;
 pub mod systems;
 

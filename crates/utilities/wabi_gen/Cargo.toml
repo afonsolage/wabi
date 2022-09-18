@@ -1,14 +1,11 @@
 [package]
-name = "wabi_doc"
+name = "wabi_gen"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wabi_doc_macro = { path = "./macro" }
-wabi_mod_api = { path = "../../mod/api" }
-
-bevy_reflect = "0.9.0-dev"
-
+xshell = "0.2"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
