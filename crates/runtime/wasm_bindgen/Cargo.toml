@@ -13,6 +13,8 @@ bevy_reflect = "0.9.0-dev"
 
 bincode = "1.3"
 
+wit-bindgen-guest-rust = { git = "https://github.com/bytecodealliance/wit-bindgen.git" }
+
 # wasm-bindgen stuff
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"

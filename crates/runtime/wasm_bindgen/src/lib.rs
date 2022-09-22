@@ -130,7 +130,7 @@ impl WabiRuntimePlatform for WasmRuntime {
                     }};
                     window.wabi_imports = imports;
                 }});"#,
-                WABI_MOODULE_NAME, WABI_PROCESS_ACTION, WABI_PROCESS_ACTION
+                WABI_MOODULE_NAME, WABI_PROCESS_ACTION, WABI_PROCESS_ACTION,
             )
             .as_str(),
         )
@@ -149,7 +149,9 @@ impl WabiRuntimePlatform for WasmRuntime {
 
         info!("Imports: {:?}", imports);
 
-        get_runtime_data().modules.insert(id, InstanceState::Loading);
+        get_runtime_data()
+            .modules
+            .insert(id, InstanceState::Loading);
 
         spawn_local(async move {
             let result = JsFuture::from(WebAssembly::instantiate_buffer(&buffer, &imports)).await;
@@ -212,7 +214,7 @@ impl WabiRuntimePlatform for WasmRuntime {
 
 pub mod wabi {
     #[wasm_bindgen::prelude::wasm_bindgen]
-    pub fn __wabi_process_action(id: u32, len: usize, action: u8) -> u32 {
-        (super::get_runtime_data().process_action)(id, len as u32, action)
+    pub fn __wabi_process_action(id: u32, len: u32, action: u8) -> u32 {
+        (super::get_runtime_data().process_action)(id, len, action)
     }
 }

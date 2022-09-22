@@ -6,8 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["crates/runtime/*", "crates/mod/*", "crates/utilities/*"]
-
+members = ["crates/runtime/*", "crates/mod/*"]
 
 [features]
 default = ["json"]
@@ -17,7 +16,6 @@ json = ["dep:serde_json"]
 [dependencies]
 # Wabi internal crates
 wabi_runtime_api = { path = "crates/runtime/api" }
-wabi_macros = { path = "crates/utilities/macros" }
 
 # Bevy!
 bevy = { version = "0.9.0-dev", default-features = false, features = [
@@ -52,9 +50,9 @@ serde_json = "1.0"
 # Using Bevy 0.9 due to improvements on Bevy Reflect
 [patch.crates-io]
 # Switch back to bevy main when #5805 gets merged
-bevy = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
-bevy_reflect = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
-bevy_math = { git = "https://github.com/afonsolage/bevy.git", branch = "reflect_improvements" }
+bevy = { git = "https://github.com/afonsolage/bevy.git", branch = "type_path" }
+bevy_reflect = { git = "https://github.com/afonsolage/bevy.git", branch = "type_path" }
+bevy_math = { git = "https://github.com/afonsolage/bevy.git", branch = "type_path" }
 
 
 # Optimize Wasmtime, due to cranelift taking ages to compile in debug mode.
@@ -88,7 +86,3 @@ path = "examples/view_json_values.rs"
 [[example]]
 name = "reflect_serde"
 path = "examples/reflect_serde.rs"
-
-[[example]]
-name = "proxy_macro"
-path = "examples/proxy_macro.rs"

@@ -10,8 +10,8 @@ use wabi_runtime_api::{
     mod_api::registry::create_type_registry, WabiInstancePlatform, WabiRuntimePlatform,
 };
 
-mod proxy;
 mod context;
+mod proxy;
 pub mod systems;
 
 #[cfg(not(target_arch = "wasm32"))]

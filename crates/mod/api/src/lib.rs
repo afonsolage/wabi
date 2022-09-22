@@ -2,6 +2,7 @@ pub mod ecs;
 pub mod log;
 pub mod query;
 pub mod registry;
+pub mod proxy;
 
 pub(crate) mod reflect_proxy;
 
@@ -10,6 +11,8 @@ pub(crate) mod reflect_proxy;
 pub enum Action {
     LOG,
     QUERY,
+
+    RPC,
 
     TEST = 254,
     #[default]

@@ -2,7 +2,7 @@ use std::io::Write;
 
 use bevy_reflect::{
     erased_serde::__private::serde::de::DeserializeSeed,
-    serde::{ReflectDeserializer, ReflectSerializer},
+    serde::{ReflectSerializer, UntypedReflectDeserializer},
     Reflect, TypeRegistry,
 };
 use wabi_mod_api::{registry::create_type_registry, Action};
@@ -49,61 +49,75 @@ pub extern "C" fn __wabi_alloc(id: u32) -> i32 {
     }
 }
 
-pub fn send_action<T: Reflect>(data: &T, action: Action) -> Option<Box<dyn Reflect>> {
-    let mut writer = HostWriter::new(action);
+trait HostWriter: Write + Sized {
+    fn len(&self) -> usize;
 
-    let registry = get_instance_data().get_registry();
-
-    let reflect_serializer = ReflectSerializer::new(data, registry);
-    let data = {
-        #[cfg(not(feature = "json"))]
-        {
-            rmp_serde::encode::write(&mut writer, &reflect_serializer)
-        }
-        #[cfg(feature = "json")]
-        {
-            serde_json::to_writer(&mut writer, &reflect_serializer)
-        }
-    };
-
-    match data {
-        Ok(()) => writer.flush().expect("Should never fail"),
-        Err(err) if action != Action::LOG => error(&format!("Failed to send message: {:?}", err)),
-        _ => panic!("Failed to serialize a log message, so, no log message."),
+    fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
-    if writer.len == 0 {
-        None
-    } else {
-        let reflect_deserializer = ReflectDeserializer::new(registry);
-        let mut deserializer = {
+    fn response_buffer(&self) -> &[u8] {
+        assert!(self.is_empty());
+        unsafe { &INSTANCE_DATA.buffer[..self.len()] }
+    }
+
+    fn send(mut self, data: &dyn Reflect) -> Option<Box<dyn Reflect>> {
+        let registry = get_instance_data().get_registry();
+
+        let reflect_serializer = ReflectSerializer::new(data, registry);
+        let data = {
             #[cfg(not(feature = "json"))]
             {
-                rmp_serde::Deserializer::from_read_ref(writer.response_buffer())
+                rmp_serde::encode::write(&mut self, &reflect_serializer)
             }
             #[cfg(feature = "json")]
             {
-                serde_json::Deserializer::from_slice(writer.response_buffer())
+                serde_json::to_writer(&mut self, &reflect_serializer)
             }
         };
 
-        match reflect_deserializer.deserialize(&mut deserializer) {
-            Ok(response) => Some(response),
-            Err(err) => {
-                error(format!("Failed to receive response: {:?}", err));
-                None
+        match data {
+            Ok(()) => self.flush().expect("Should never fail"),
+            Err(err) => error(&format!("Failed to send message: {:?}", err)),
+        }
+
+        if self.is_empty() {
+            None
+        } else {
+            let reflect_deserializer = UntypedReflectDeserializer::new(registry);
+            let mut deserializer = {
+                #[cfg(not(feature = "json"))]
+                {
+                    rmp_serde::Deserializer::from_read_ref(self.response_buffer())
+                }
+                #[cfg(feature = "json")]
+                {
+                    serde_json::Deserializer::from_slice(self.response_buffer())
+                }
+            };
+
+            match reflect_deserializer.deserialize(&mut deserializer) {
+                Ok(response) => Some(response),
+                Err(err) => {
+                    error(format!("Failed to receive response: {:?}", err));
+                    None
+                }
             }
         }
     }
 }
 
+pub fn send_action(data: &dyn Reflect, action: Action) -> Option<Box<dyn Reflect>> {
+    ActionWriter::new(action).send(data)
+}
+
 #[derive(Default)]
-pub(crate) struct HostWriter {
+struct ActionWriter {
     len: usize,
     action: u8,
 }
 
-impl HostWriter {
+impl ActionWriter {
     pub fn new(action: Action) -> Self {
         Self {
             len: 0,
@@ -112,15 +126,13 @@ impl HostWriter {
     }
 }
 
-impl HostWriter {
-    fn response_buffer(&self) -> &[u8] {
-        assert!(self.len > 0);
-
-        unsafe { &INSTANCE_DATA.buffer[..self.len] }
+impl HostWriter for ActionWriter {
+    fn len(&self) -> usize {
+        self.len
     }
 }
 
-impl std::io::Write for HostWriter {
+impl std::io::Write for ActionWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let begin = self.len;
         self.len = begin + buf.len();

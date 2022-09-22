@@ -1,7 +1,7 @@
 use bevy::prelude::{debug, error, info, trace, warn, World};
 use bevy_reflect::{
     erased_serde::__private::serde::de::DeserializeSeed,
-    serde::{ReflectDeserializer, ReflectSerializer},
+    serde::{ReflectSerializer, UntypedReflectDeserializer},
     FromReflect, Reflect, TypeRegistry,
 };
 use wabi_runtime_api::{
@@ -11,7 +11,7 @@ use wabi_runtime_api::{
 
 use crate::reflect_query;
 
-use super::WabiInstance;
+use super::{proxy, WabiInstance};
 
 pub(super) struct Context {
     instance: *mut WabiInstance,
@@ -65,7 +65,7 @@ impl Context {
     fn deserialize_data(&self, len: u32) -> Box<dyn Reflect> {
         let buffer = self.instance().read_buffer(len);
 
-        let reflect_deserializer = ReflectDeserializer::new(self.registry());
+        let reflect_deserializer = UntypedReflectDeserializer::new(self.registry());
 
         let mut deserializer = {
             #[cfg(not(feature = "json"))]
@@ -124,6 +124,8 @@ impl Context {
                 None
             }
             Action::QUERY => Some(self.process_query(Query::from_reflect(&*data).unwrap())),
+            Action::RPC => proxy::call(data),
+            //
             Action::TEST => {
                 debug!("Received: {:?}", data);
                 None

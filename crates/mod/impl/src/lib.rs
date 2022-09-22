@@ -18,6 +18,6 @@
 // }
 
 pub mod io;
+pub mod query;
 pub mod test;
 pub mod wabi;
-pub mod query;

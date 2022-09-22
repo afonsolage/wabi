@@ -1,6 +1,6 @@
 use bevy_reflect::{
     erased_serde::__private::serde::de::DeserializeSeed,
-    serde::{ReflectDeserializer, ReflectSerializer},
+    serde::{ReflectSerializer, UntypedReflectDeserializer},
     FromReflect, Reflect,
 };
 use wabi_runtime_api::mod_api::{
@@ -33,11 +33,11 @@ fn main() {
     let json =
         serde_json::to_string_pretty(&ReflectSerializer::new(value, &type_registry)).unwrap();
 
-    let reflect_deserializer = ReflectDeserializer::new(&type_registry);
+    let reflect_deserializer = UntypedReflectDeserializer::new(&type_registry);
     let mut deserializer = rmp_serde::decode::Deserializer::from_read_ref(&encoded);
     let decoded = reflect_deserializer.deserialize(&mut deserializer).unwrap();
 
-    let reflect_deserializer = ReflectDeserializer::new(&type_registry);
+    let reflect_deserializer = UntypedReflectDeserializer::new(&type_registry);
     let mut deserializer = serde_json::de::Deserializer::from_str(&json);
     let json_decoded = reflect_deserializer.deserialize(&mut deserializer).unwrap();
 
