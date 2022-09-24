@@ -11,7 +11,7 @@ use wabi_runtime_api::{
 
 use crate::reflect_query;
 
-use super::{proxy, WabiInstance};
+use super::WabiInstance;
 
 pub(super) struct Context {
     instance: *mut WabiInstance,
@@ -124,7 +124,6 @@ impl Context {
                 None
             }
             Action::QUERY => Some(self.process_query(Query::from_reflect(&*data).unwrap())),
-            Action::RPC => proxy::call(data),
             //
             Action::TEST => {
                 debug!("Received: {:?}", data);

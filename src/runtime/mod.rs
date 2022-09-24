@@ -11,7 +11,6 @@ use wabi_runtime_api::{
 };
 
 mod context;
-mod proxy;
 pub mod systems;
 
 #[cfg(not(target_arch = "wasm32"))]
